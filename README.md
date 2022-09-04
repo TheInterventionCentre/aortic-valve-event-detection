@@ -2,7 +2,7 @@
 
 - - -
 
-Source code for recreating "Automatic Detection of Aortic Valve Events Using Deep Neural Networks on Cardiac Signals From Epicardially Placed Accelerometer 
+Source code for recreating "Automatic Detection of Aortic Valve Events Using Deep Neural Networks on Cardiac Signals From Epicardially Placed Accelerometer"
 
 - - -
 
