@@ -1,0 +1,266 @@
+experiment:
+    experiment_path: ''
+    root: ''
+    save_dir: '../experiments/net_json/'
+
+    experiment_suffix: ['model.net1.type', 'losses', 'data_path.val',
+                       'optimizer.kwargs.weight_decay']
+    experiment_prefix: ''
+
+seeds:
+    use_given_seeds: True
+    numpy: 17
+    torch: 19
+    torch_cuda: 21
+    random: 34
+
+run:
+    mode: 'training' # 'evaluation' | 'training'
+    run_id: 0
+    numb_of_epochs: 20
+    running_phases:
+        train: True
+        val: False
+#        test: False
+
+saver_restorer:
+    lower_is_better: True
+    reference_keys:
+        - 'totalLoss'
+    reference_dict: 'losses' #'losses' | 'metrics'
+    resume_training:
+        restore_last_epoch: False
+        restore_best_model: False
+
+device: 'cuda:0'
+
+visualizer:
+    type: 'visualizer.tensorboard_1d.Logger'
+    kwargs:
+        image_frequency: 30 # How often to create images (e.g. every 5 call/epoch)
+
+model:
+    net1:
+        type: network_zoo.multihead_rnn_v3_1d.Self_attention_rnn_v3
+        kwargs:
+            num_outputs: 5
+            transformer_num_heads: 8
+            positional_encoding: 'add'     # 'add' | 'cat'
+            enc_chs: [32, 64, 64, 128]
+            in_channels: 1
+            dilation: 1
+            filter_size: 3
+            padding: 0
+            downsampling_mode: 'maxpool'   # 'maxpool' / '2dconv'
+            norm_layer_mode: 'groupNorm'   # 'instanceNorm' | 'groupNorm' | 'batchNorm' | 'groupNorm'
+            residual_block: True           # True / False
+            activation_mode: 'leaky_relu'  # 'relu' / 'leaky_relu'
+            conv_layer: 'default'          # 'WS' | 'default'
+            rnn_layers: 1
+            rnn_hidden_size: 128
+        input_keys:
+            ['acc_mag']
+        output_list_indices:
+            0:         # list index in "out_list"
+                order:
+                     [
+                     [['rnn_1d_conf_ed',  'rnn_1d_loc_ed'], 'sigmoid'],
+                     [['rnn_1d_conf_es',  'rnn_1d_loc_es', 'rnn_species'], 'sigmoid'],
+                     ]
+                weight: 1
+                tag: ''
+            1:         # list index in "out_list"
+                order:
+                     [
+                     [['cnn_1d_conf_ed',  'cnn_1d_loc_ed'], 'sigmoid'],
+                     [['cnn_1d_conf_es',  'cnn_1d_loc_es', 'cnn_species'], 'sigmoid'],
+                     ]
+                weight: 1
+                tag: ''
+            2:         # list index in "out_list"
+                order:
+                     [
+                     [['att_1d_conf_ed',  'att_1d_loc_ed'], 'sigmoid'],
+                     [['att_1d_conf_es',  'att_1d_loc_es', 'att_species'], 'sigmoid'],
+                     ]
+                weight: 1
+                tag: ''
+            3:         # list index in "out_list"
+                order:
+                     [
+                     [['fov'], ''],
+                     ]
+                weight: 1
+                tag: ''
+            4:         # list index in "out_list"
+                order:
+                     [
+                     [['dx'], ''],
+                     ]
+                weight: 1
+                tag: ''
+            5:         # list index in "out_list"
+                order:
+                     [
+                     [['attention_map'], ''],
+                     ]
+                weight: 1
+                tag: ''
+        return_index:
+            index: 0 #the tensor to be passes on to the next module
+
+losses:
+    BFL:
+        type: evaluators.loss.Cross_entropy_loss
+        kwargs:
+#            name: 'BFL'
+            reduction: 'mean'
+        weight: 0.1
+        calculate_during_train: True
+        signatures: #[dataDict, predDict]
+            - ['patch_confidence_ed', 'rnn_1d_conf_ed']
+            - ['patch_confidence_ed', 'cnn_1d_conf_ed']
+            - ['patch_confidence_ed', 'att_1d_conf_ed']
+            - ['patch_confidence_es', 'rnn_1d_conf_es']
+            - ['patch_confidence_es', 'cnn_1d_conf_es']
+            - ['patch_confidence_es', 'att_1d_conf_es']
+        additional_inputs: null
+
+    BFL_species:
+        type: evaluators.loss.Cross_entropy_loss
+        kwargs:
+#            name: 'BFL'
+            reduction: 'mean'
+        weight: 0.05
+        calculate_during_train: True
+        signatures: #[dataDict, predDict]
+            - ['lab_species', 'rnn_species']
+#            - ['lab_species', 'cnn_species']
+            - ['lab_species', 'att_species']
+        additional_inputs: null
+
+    Reg_ED:
+        type: evaluators.loss.Regression
+        kwargs:
+#            name: 'reg_ED'
+            reduction: 'mean'
+        weight: 1.0
+        calculate_during_train: True
+        signatures:
+            - ['patch_location_ed', 'rnn_1d_loc_ed']
+            - ['patch_location_ed', 'cnn_1d_loc_ed']
+            - ['patch_location_ed', 'att_1d_loc_ed']
+        additional_inputs: ['patch_confidence_ed']
+
+    Reg_ES:
+        type: evaluators.loss.Regression
+        kwargs:
+#            name: 'reg_ES'
+            reduction: 'mean'
+        weight: 1.0
+        calculate_during_train: True
+        signatures:
+            - ['patch_location_es', 'rnn_1d_loc_es']
+            - ['patch_location_es', 'cnn_1d_loc_es']
+            - ['patch_location_es', 'att_1d_loc_es']
+        additional_inputs: ['patch_confidence_es']
+
+metrics:
+    Reg_ES:
+        type: evaluators.loss.Regression
+        kwargs:
+#            name: 'reg_ES'
+            reduction: 'mean'
+        weight: 1.0
+        calculate_during_train: True
+        signatures:
+            - ['patch_location_es', 'rnn_1d_loc_es']
+            - ['patch_location_es', 'cnn_1d_loc_es']
+        additional_inputs: ['patch_confidence_es']
+
+optimizer:
+    type: torch.optim.AdamW
+    kwargs:
+        lr: 0.001
+        weight_decay: 0.0001
+        amsgrad: False
+
+scheduler:
+    type: 'torch.optim.lr_scheduler.StepLR'    # alternatives: "None", "cosine", "plateau", "step"
+    step_freq: 1
+    kwargs:
+        step_size: 10000
+        gamma: 0.4
+
+data_path:
+    csv: '../data_split_json.csv'
+    train: ['s1', 's2', 's3', 's4']
+    val:   ['s5']
+    test:  ['s0']
+
+# train config
+train:
+    dataset:
+        type: dataLoader.dataset_json.myDataset
+        kwargs:
+            seq_length_in_ms: 3000
+            ms_per_pixel: 2
+    sampler:
+        type: torch.utils.data.sampler.RandomSampler
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: True
+            shuffle: True
+            prefetch_factor: 2
+    augmentation:
+#        - addRandomNoise:
+#            type: utils.augmentation.AddRandomNoise
+#            kwargs:
+#                mean: 0
+#                std: 0.01
+#                keys: ['acc_mag']
+#            probability: 0.5
+        - timeWarp:
+            type: utils.augmentation.TimeWarp
+            kwargs:
+#                scale_range: [1.0, 1.0]
+                scale_range: [0.8, 1.2]
+                keys: ['ms_per_pixel']
+            probability: 1.0
+        - addRandomGain:
+            type: utils.augmentation.AddRandomGain
+            kwargs:
+#                scale_range: [1.0, 1.0]
+                gain_range: [0.8, 1.2]
+                keys: ['acc_mag']
+            probability: 1.0
+
+val:
+    dataset:
+        type: dataLoader.dataset_json.myDataset
+        kwargs:
+            seq_length_in_ms: 3000
+            ms_per_pixel: 2
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: True
+            shuffle: True
+            prefetch_factor: 2
+
+test:
+    dataset:
+        type: dataLoader.dataset_json.myDataset
+        kwargs:
+            seq_length_in_ms: 15000
+            ms_per_pixel: 2
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: True
+            shuffle: True
+            prefetch_factor: 2

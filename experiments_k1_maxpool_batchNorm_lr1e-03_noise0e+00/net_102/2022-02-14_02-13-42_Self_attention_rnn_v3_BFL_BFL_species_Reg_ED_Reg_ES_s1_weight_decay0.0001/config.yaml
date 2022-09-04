@@ -1,0 +1,276 @@
+data_path:
+    csv: ../data_split_json.csv
+    test:
+    -   s2
+    train:
+    -   s0
+    -   s3
+    -   s4
+    -   s5
+    val:
+    -   s1
+device: cuda:0
+experiment:
+    experiment_path: ../experiments_k1_maxpool_batchNorm_lr1e-03_noise0e+00/net_102/2022-02-14_02-13-42_Self_attention_rnn_v3_BFL_BFL_species_Reg_ED_Reg_ES_s1_weight_decay0.0001
+    experiment_prefix: ''
+    experiment_suffix:
+    -   model.net1.type
+    -   losses
+    -   data_path.val
+    -   optimizer.kwargs.weight_decay
+    root: ''
+    save_dir: ../experiments_k1_maxpool_batchNorm_lr1e-03_noise0e+00/net_102
+losses:
+    BFL:
+        additional_inputs: null
+        calculate_during_train: true
+        kwargs:
+            reduction: mean
+        signatures:
+        -   -   patch_confidence_ed
+            -   rnn_1d_conf_ed
+        -   -   patch_confidence_ed
+            -   cnn_1d_conf_ed
+        -   -   patch_confidence_ed
+            -   att_1d_conf_ed
+        -   -   patch_confidence_es
+            -   rnn_1d_conf_es
+        -   -   patch_confidence_es
+            -   cnn_1d_conf_es
+        -   -   patch_confidence_es
+            -   att_1d_conf_es
+        type: evaluators.loss.Cross_entropy_loss
+        weight: 0.1
+    BFL_species:
+        additional_inputs: null
+        calculate_during_train: true
+        kwargs:
+            reduction: mean
+        signatures:
+        -   -   lab_species
+            -   rnn_species
+        -   -   lab_species
+            -   att_species
+        type: evaluators.loss.Cross_entropy_loss
+        weight: 0.05
+    Reg_ED:
+        additional_inputs:
+        -   patch_confidence_ed
+        calculate_during_train: true
+        kwargs:
+            reduction: mean
+        signatures:
+        -   -   patch_location_ed
+            -   rnn_1d_loc_ed
+        -   -   patch_location_ed
+            -   cnn_1d_loc_ed
+        -   -   patch_location_ed
+            -   att_1d_loc_ed
+        type: evaluators.loss.Regression
+        weight: 1.0
+    Reg_ES:
+        additional_inputs:
+        -   patch_confidence_es
+        calculate_during_train: true
+        kwargs:
+            reduction: mean
+        signatures:
+        -   -   patch_location_es
+            -   rnn_1d_loc_es
+        -   -   patch_location_es
+            -   cnn_1d_loc_es
+        -   -   patch_location_es
+            -   att_1d_loc_es
+        type: evaluators.loss.Regression
+        weight: 1.0
+metrics:
+    Reg_ES:
+        additional_inputs:
+        -   patch_confidence_es
+        calculate_during_train: true
+        kwargs:
+            reduction: mean
+        signatures:
+        -   -   patch_location_es
+            -   rnn_1d_loc_es
+        -   -   patch_location_es
+            -   cnn_1d_loc_es
+        type: evaluators.loss.Regression
+        weight: 1.0
+model:
+    net1:
+        input_keys:
+        -   acc_mag
+        kwargs:
+            activation_mode: leaky_relu
+            conv_layer: default
+            dilation: 1
+            downsampling_mode: maxpool
+            enc_chs:
+            -   32
+            -   64
+            -   64
+            -   128
+            filter_size: 3
+            in_channels: 1
+            norm_layer_mode: batchNorm
+            num_outputs: 5
+            padding: 0
+            positional_encoding: add
+            residual_block: true
+            rnn_hidden_size: 128
+            rnn_layers: 1
+            transformer_num_heads: 8
+        output_list_indices:
+            0:
+                order:
+                -   -   -   rnn_1d_conf_ed
+                        -   rnn_1d_loc_ed
+                    -   sigmoid
+                -   -   -   rnn_1d_conf_es
+                        -   rnn_1d_loc_es
+                        -   rnn_species
+                    -   sigmoid
+                tag: ''
+                weight: 1
+            1:
+                order:
+                -   -   -   cnn_1d_conf_ed
+                        -   cnn_1d_loc_ed
+                    -   sigmoid
+                -   -   -   cnn_1d_conf_es
+                        -   cnn_1d_loc_es
+                        -   cnn_species
+                    -   sigmoid
+                tag: ''
+                weight: 1
+            2:
+                order:
+                -   -   -   att_1d_conf_ed
+                        -   att_1d_loc_ed
+                    -   sigmoid
+                -   -   -   att_1d_conf_es
+                        -   att_1d_loc_es
+                        -   att_species
+                    -   sigmoid
+                tag: ''
+                weight: 1
+            3:
+                order:
+                -   -   -   fov
+                    -   ''
+                tag: ''
+                weight: 1
+            4:
+                order:
+                -   -   -   dx
+                    -   ''
+                tag: ''
+                weight: 1
+            5:
+                order:
+                -   -   -   attention_map
+                    -   ''
+                tag: ''
+                weight: 1
+        return_index:
+            index: 0
+        type: network_zoo.multihead_rnn_v3_1d.Self_attention_rnn_v3
+optimizer:
+    kwargs:
+        amsgrad: false
+        lr: 0.001
+        weight_decay: 0.0001
+    type: torch.optim.AdamW
+run:
+    mode: training
+    numb_of_epochs: 250
+    run_id: 0
+    running_phases:
+        train: true
+        val: false
+saver_restorer:
+    lower_is_better: true
+    reference_dict: losses
+    reference_keys:
+    -   totalLoss
+    resume_training:
+        restore_best_model: false
+        restore_last_epoch: false
+scheduler:
+    kwargs:
+        gamma: 0.4
+        step_size: 10000
+    step_freq: 1
+    type: torch.optim.lr_scheduler.StepLR
+seeds:
+    numpy: 102
+    random: 102
+    torch: 102
+    torch_cuda: 102
+    use_given_seeds: true
+test:
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: true
+            prefetch_factor: 2
+            shuffle: true
+    dataset:
+        kwargs:
+            ms_per_pixel: 2
+            seq_length_in_ms: 15000
+        type: dataLoader.dataset_json.myDataset
+train:
+    augmentation:
+    -   timeWarp:
+            kwargs:
+                keys:
+                -   ms_per_pixel
+                scale_range:
+                -   0.8
+                -   1.2
+            probability: 1.0
+            type: utils.augmentation.TimeWarp
+    -   addRandomGain:
+            kwargs:
+                gain_range:
+                -   0.8
+                -   1.2
+                keys:
+                -   acc_mag
+                -   scalogram
+            probability: 1.0
+            type: utils.augmentation.AddRandomGain
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: true
+            prefetch_factor: 2
+            shuffle: true
+    dataset:
+        kwargs:
+            ms_per_pixel: 2
+            seq_length_in_ms: 3000
+        type: dataLoader.dataset_json.myDataset
+    sampler:
+        type: torch.utils.data.sampler.RandomSampler
+val:
+    data_loader:
+        kwargs:
+            batch_size: 32
+            num_workers: 4
+            pin_memory: true
+            prefetch_factor: 2
+            shuffle: true
+    dataset:
+        kwargs:
+            ms_per_pixel: 2
+            seq_length_in_ms: 3000
+        type: dataLoader.dataset_json.myDataset
+visualizer:
+    kwargs:
+        image_frequency: 150
+    type: visualizer.tensorboard_1d.Logger
