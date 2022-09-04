@@ -1,13 +1,5 @@
-<!---
-The article is sent for publication in the Journal of Biomedical and Health Informatics.
--->
 
-<!---
-The article was published in the Journal of Biomedical and Health Informatics and is available 
-[online](https://ieeexplore.ieee.org/document/9216477).
--->
-
-The article was published in the Journal of Biomedical and Health Informatics and is available #LINK_TO_PAPER.
+The article was published in the Journal of Biomedical and Health Informatics and is available [here](https://ieeexplore.ieee.org/document/9792198).  
 
 ## Supplementary Material
 
