@@ -130,6 +130,10 @@ def parse_data_paths(cfg):
 
 ##################################################################################################################################
 class calculateAVGstats():
+    """
+    A class that computes the average metrics/losses across the dataset.
+    """
+
     def __init__(self):
         self.is_initialized = 0
         return

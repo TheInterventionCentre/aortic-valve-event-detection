@@ -18,9 +18,15 @@ def convert_pickle_data_to_json(folder_path):
                     with open(str(recording), "rb") as input_file:
                         data = pickle.load(input_file)
 
+                    # if 'ecg' in list(data.keys()):
+                    #     if np.max(data['ecg'])==0 and np.min(data['ecg'])==0:
+                    #         a = 1
+                    # else:
+                    #     a = 1
+
+
                     trimmed_dict = {}
-                    headers = ['acc_x', 'acc_y', 'acc_z', 'lvp', 'sample_rate', 'intervention', 'identifier',
-                               'experiment_name', 'animal_species']
+                    headers = ['experiment_name', 'animal_species', 'sample_rate', 'intervention', 'identifier', 'acc_x', 'acc_y', 'acc_z', 'lvp' , 'ecg']
                     for key in headers:
                         trimmed_dict[key] = data[key]
                     parts = list(recording.parts)
@@ -60,7 +66,7 @@ def convert_pickle_targets_to_json(folder_path):
 if __name__ == '__main__':
     folder_path = '../../data_pickle5'
     convert_pickle_data_to_json(folder_path)
-    convert_pickle_targets_to_json(folder_path)
+    # convert_pickle_targets_to_json(folder_path)
 
 
 

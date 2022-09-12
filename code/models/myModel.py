@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import collections
 import numpy as np
 from utils.loader import load_class
-from pprint import pprint
 
 class Model(nn.Module):
     """ A wrapper class around the neural network (nn.Module).
@@ -18,28 +17,24 @@ class Model(nn.Module):
         0:         # list index in "out_list"
             order:
                  [
-                 [['LA', 'LV', 'MYO', 'background'], 'C'],
-                 [['basal_left'], 'WH'],
-                 [['basal_right'], 'WH']
+                 [['rnn_1d_conf_ed',  'rnn_1d_loc_ed'], 'sigmoid'],
+                 [['rnn_1d_conf_es',  'rnn_1d_loc_es', 'rnn_species'], 'sigmoid'],
                  ]
             weight: 1
-            tag: 'final'
+            tag: ''
         1:         # list index in "out_list"
             order:
                  [
-                 [['2CH', '4CH', 'APLAX'], 'C'],
+                 [['cnn_1d_conf_ed',  'cnn_1d_loc_ed'], 'sigmoid'],
+                 [['cnn_1d_conf_es',  'cnn_1d_loc_es', 'cnn_species'], 'sigmoid'],
                  ]
             weight: 1
-            tag: 'final'
+            tag: ''
 
     Consider that the network defined by cfg['model']['net1]['type'] returns two tensors.
     The keys '0', '1' specifies the index in the list of tensors. Lets say the first tensor has
-    shape of [batch=16, ch=6, Ny=128, Nx=128]. The 'order' specifies that the first four channels are used to
-    output predictions of ['LA', 'LV', 'MYO', 'background']. The 'C' character within the list specifies that the
-    softmax function should be applied along the channel dimension. For the next two elements in the 'order' list,
-    the softmax function should be applied across the image's width and height (WH) dimension.
-    The second tensor can, for instance, have a shape of [batch=16, ch=3], and again the softmax function will be applied
-    along the channel dimension.
+    shape of [batch=16, ch=5]. The 'order' specifies the output function applied on the given channels. In
+    the example, the sigmoid function is applied on all five channels on both the output tensors.
       """
 
     def __init__(self, cfg, to_ONNX=False):

@@ -114,15 +114,22 @@ if __name__ == '__main__':
     k=1 #1,2,3
     downsampling_mode = 'maxpool' # 'maxpool' | 'maxBlurPool'
     norm_layer_mode = 'batchNorm' # 'batchNorm' | 'groupNorm'
+    lr = 0.001
+
+    print('Updating config:')
+    print(f'Updating: k={k}')
+    print(f'Updating: downsampling_mode={downsampling_mode}')
+    print(f'Updating: norm_layer_mode ={norm_layer_mode }')
+    print(f'Updating: lr={lr}')
 
     #update config file
     cfg.model.net1.kwargs.enc_chs         = [v*k for v in cfg.model.net1.kwargs.enc_chs]
     cfg.model.net1.kwargs.rnn_hidden_size = cfg.model.net1.kwargs.rnn_hidden_size*k
     cfg.model.net1.kwargs.downsampling_mode = downsampling_mode
     cfg.model.net1.kwargs.norm_layer_mode = norm_layer_mode
+    cfg.optimizer.kwargs.lr = lr
 
-    # hard corded values: lr and noise
-    lr = 0.001
+    # hard corded values: Noise
     noise = 0.00
 
     save_dir = Path(cfg.experiment.save_dir)

@@ -2,8 +2,8 @@ from utils.loader import load_class
 import torch
 
 class Losses_and_metrics():
-    """ The class connects the signatures (e.g LA, LV, MYO, basal_left) from cfg['model']['net1]['output_list_indices']
-     together with the various losses and metrics.
+    """ The class connects the signatures (e.g rnn_1d_conf_ed, cnn_1d_conf_ed) from cfg['model']['net1]['output_list_indices']
+     together with targets (found from the dataloader) for the various losses and metrics.
 
      """
     def __init__(self, in_dict, mode='training', optimizer=None, is_loss=False):

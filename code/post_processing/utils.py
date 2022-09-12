@@ -70,6 +70,10 @@ def calculateConfidenceMeasuresAndReturnECGTrigs(confidence, flags, msPerPixel):
 
 
 def calculate_confidence_from_prediction_density(density):
+    """
+    Calculate confidence score
+    """
+
     nx = density.shape[0]
     centerOfMassList = []
     criterionlist = []
@@ -304,6 +308,7 @@ def movingaverage(values, window, winType='rect', padding='original'):
 
 ########################################################################################################################
 def calculateEstimationDensity(pixel_list, confidence_list, filter_len, nx):
+    """ Computes the prediction density from the patch estimates"""
 
     #sort the ecg trig pixel locations
     pixels        = np.array(pixel_list)
