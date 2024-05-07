@@ -15,6 +15,28 @@ def padarray(A, size):
     t = size - len(A)
     return np.pad(A, pad_width=(0, t), mode='constant')
 
+def modify_mv13_folder_structure():
+    mv13_path = Path("../data_json/MV/MV13/")
+    if list((mv13_path/"dobutamine").glob('*')) == []:
+        (mv13_path/"baseline").mkdir(parents=True, exist_ok=True)
+        (mv13_path/"MV1302_baseline_b_000.json").rename(mv13_path/"baseline"/"MV1302_baseline_b_000.json")
+        (mv13_path/"MV1310_baseline_b_000.json").rename(mv13_path/"baseline"/"MV1310_baseline_b_000.json")
+        (mv13_path/"MV1312_baseline_b_000.json").rename(mv13_path/"baseline"/"MV1312_baseline_b_000.json")
+        
+        (mv13_path/"crt").mkdir(parents=True, exist_ok=True)
+        (mv13_path/"MV13_crt_b_000.json").rename(mv13_path/"crt"/"MV13_crt_b_000.json")
+        (mv13_path/"MV1302_crt_b_000.json").rename(mv13_path/"crt"/"MV1302_crt_b_000.json")
+
+        (mv13_path/"dobutamine").mkdir(parents=True, exist_ok=True)
+        (mv13_path/"MV13_dobutamine_b_000.json").rename(mv13_path/"dobutamine"/"MV13_dobutamine_b_000.json")
+
+        (mv13_path/"lbbb").mkdir(parents=True, exist_ok=True)
+        (mv13_path/"MV13_lbbb_b_000.json").rename(mv13_path/"lbbb"/"MV13_lbbb_b_000.json")
+        (mv13_path/"MV1359_lbbb_b_000.json").rename(mv13_path/"lbbb"/"MV1359_lbbb_b_000.json")
+        (mv13_path/"MV1361_lbbb_b_000.json").rename(mv13_path/"lbbb"/"MV1361_lbbb_b_000.json")
+
+    return
+
 class myDataset(Dataset):
     def __init__(self, cfg, phase, seq_length_in_ms=1499, ms_per_pixel=2, species=()):
         self.cfg               = cfg
@@ -22,6 +44,10 @@ class myDataset(Dataset):
         self.seq_length_in_ms  = seq_length_in_ms
         if ms_per_pixel != 2:
             raise ValueError('ms_per_pixel=2 is currently supported only')
+        
+        #modify patient folder structure: data_json\MV\MV13
+        modify_mv13_folder_structure()
+
         self.ms_per_pixel      = ms_per_pixel
         self.list_of_samples = self.get_sample_paths(cfg, phase, species)
         if phase !='test':
@@ -101,13 +127,21 @@ class myDataset(Dataset):
         data['ms_per_pixel'] = 1000 / data['sample_rate']
 
         # get targets
-        with open(str(path).replace('data_json', 'targets_json'), 'r') as input_file:
+        target_str = str(path).replace('data_json', 'targets_json')
+        if "MKCMS" in target_str: # Need to modify the path to "targets_json" due to inconsistance with "data_json".
+            if "baseline-closed-chest" in target_str:
+                target_str = target_str.replace('-cc_b', '(cc)_b')
+                target_str = target_str.replace('baseline-closed-chest', 'baseline(cc)')
+            elif "-closed-chest" in target_str:
+                target_str = target_str.replace('-closed-chest', '')
+
+        with open(target_str, 'r') as input_file:
             target_data = json.load(input_file)
             data['es'] = target_data['es']
             data['ed'] = target_data['ed']
 
         #convert to numpy
-        for key in ['acc_x', 'acc_y', 'acc_z', 'lvp', 'es', 'ed']:
+        for key in ['acc_x', 'acc_y', 'acc_z', 'lvp', 'es', 'ed', 'ecg']:
             data[key] = np.array(data[key])
         data['acc_mag'] = np.sqrt(data['acc_x']**2 + data['acc_y']**2 + data['acc_z']**2)
         data['dpdt'] = data['lvp'][1:] - data['lvp'][:-1]

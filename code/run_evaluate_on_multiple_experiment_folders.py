@@ -6,6 +6,7 @@ from pathlib import Path
 
 from post_processing.post_processing_v2 import get_flags
 from evaluate import run_evaluation
+from collect_results_from_single_cross_validations_run import collect_results_tables_VI_and_VII
 
 if __name__ == '__main__':
 
@@ -35,3 +36,5 @@ if __name__ == '__main__':
             cfg_copy = copy.deepcopy(cfg)
             run_evaluation(cfg_copy, flags)
         a = 1
+        
+    collect_results_tables_VI_and_VII()

@@ -93,7 +93,9 @@ def combine_AVC_ACO_result_to_latex_table(avo, avc, file_path, species_key):
     if species_key == 'dog':
         ordering_keys = ['baseline', 'dobutamine', 'ischemia', 'rvp', 'lbbb', 'crt', 'lbbbdob', 'lbbbisc', 'lbbbloading', 'all']
     elif species_key == 'pig':
-        ordering_keys = ['baseline', 'baseline(cc)', 'adrenaline', 'dobutamine', 'esmolol', 'ischemia', 'ischemiadob', 'niprid', 'loading', 'unloading', 'all']
+        #ordering_keys = ['baseline', 'baseline(cc)', 'adrenaline', 'dobutamine', 'esmolol', 'ischemia', 'ischemiadob', 'niprid', 'loading', 'unloading', 'all']
+        ordering_keys = ['baseline', 'baseline-closed-chest', 'adrenaline', 'dobutamine', 'esmolol', 'ischemia', 'ischemiadob', 'niprid', 'loading-closed-chest', 'unloading-closed-chest', 'all']
+
     else:
         raise ValueError('Unknown species')
 
@@ -137,6 +139,23 @@ def combine_AVC_ACO_result_to_latex_table(avo, avc, file_path, species_key):
 def debug(x):
     print(x)
     return str(x)
+
+def collect_results_tables_VI_and_VII():
+    folder_path = Path('../experiments_k1_maxpool_batchNorm_lr1e-03_noise0e+00/net_102')
+
+    #convert the flags dict to the "config" dict
+    flags = get_flags()  # specifying the post processing parameters
+    config = {'thres': int(flags['thresholds']['accept_threshold']*100),
+              'dist': int(flags['thresholds']['noDetectDist']),
+              'head': flags['output_head'],                            # 'cnn' | 'rnn' | 'att'
+              'densityWinSize': flags['trigDensityWinSize'],
+              'linearLoc': int(flags['linearLoc']),                    # 0 | 1
+              'phase': 'test'}
+
+    result_dict = collector(folder_path, config)
+    store_result_to_latex(result_dict, folder_path, config)
+
+    return
 
 if __name__ == '__main__':
 
